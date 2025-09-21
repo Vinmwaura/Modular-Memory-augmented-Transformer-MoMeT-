@@ -1,7 +1,7 @@
 {
-    "Content_fields": ["person", "occupation", "location", "likes", "dislikes", "hobbies", "mother", "father"],
-    "Context_categories": ["father", "mother", "likes", "dislikes", "hobbies", "location", "occupation"],
-    "Content": "{FName} {LName}; Job: {Occupation}; Lives in: {Location}; Likes: {Likes}; Dislikes: {Dislikes}; Hobbies: {Hobbies}; Mother: {Mother_FName} {Mother_LName}; Father: {Father_FName} {Father_LName};",
+    "Content_fields": ["person", "occupation", "location", "likes", "dislikes", "hobbies", "university", "mother", "father"],
+    "Context_categories": ["father", "mother", "likes", "dislikes", "hobbies", "location", "occupation", "university"],
+    "Content": "{FName} {LName}; Job: {Occupation}; Lives in: {Location}; Likes: {Likes}; Dislikes: {Dislikes}; Hobbies: {Hobbies}; University attended: {University}; Mother: {Mother_FName} {Mother_LName}; Father: {Father_FName} {Father_LName};",
     "Context": {
         "father": [
             {
@@ -713,6 +713,97 @@
                 "Response": [
                     "{FName} {LName} hupenda kufanya '{Hobbies}' burudani.",
                     "Mapendeleo ya burudani ya {FName} {LName} ni '{Hobbies}'."
+                ]
+            }
+        ],
+        "university": [
+            {
+                "Prompt": "What University did {FName} {LName} attend?",
+                "Response": [
+                    "{FName} {LName} attended {University}.",
+                    "He/She attended {University}."
+                ]
+            },
+            {
+                "Prompt": "What University did {FName} {LName} pursue their degree in?",
+                "Response": [
+                    "{FName} {LName} pursued their degree at {University}.",
+                    "He/She pursued their degree at {University}.",
+                    "They pursued their degree at {University}."
+                ]
+            },
+            {
+                "Prompt": "Which University did {FName} {LName} go to?",
+                "Response": [
+                    "{FName} {LName} went to {University}.",
+                    "{FName} {LName} was at {University}.",
+                    "He/She went to {University}.",
+                    "He/She was at {University}."
+                ]
+            },
+            {
+                "Prompt": "Which University did {FName} {LName} studied at?",
+                "Response": [
+                    "{FName} {LName} studied {University}.",
+                    "He/She studied at {University}.",
+                    "He/She did her studies at {University}."
+                ]
+            },
+            {
+                "Prompt": "Which institutions of higher learning did {FName} {LName} attend?",
+                "Response": [
+                    "{FName} {LName} attended {University}.",
+                    "He/She attended {University}.",
+                    "He/She is an alumnus/alumna of {University}.",
+                    "His/Her higher education was at {University}."
+                ]
+            },
+            {
+                "Prompt": "What uni did {FName} {LName} go to?",
+                "Response": [
+                    "{FName} {LName} went to {University}.",
+                    "He/She went to {University}.",
+                    "The uni he/she went to was {University}.",
+                    "The uni {FName} {LName} went to was {University}."
+                ]
+            },
+            {
+                "Prompt": "Ni chuo kikuu kipi {FName} {LName} alisoma?",
+                "Response": [
+                    "{FName} {LName} alisomea {University}.",
+                    "{FName} {LName} alisomea chuo kikuu cha {University}.",
+                    "Alisomea {University}.",
+                    "Alisomea chuo kikuu cha {University}."
+                ]
+            },
+            {
+                "Prompt": "{FName} {LName} alihudhuria chuo kikuu gani?",
+                "Response": [
+                    "{FName} {LName} alihudhuria {University}.",
+                    "{FName} {LName} alihudhuria chuo kikuu cha {University}.",
+                    "Alihudhuria {University}.",
+                    "Alihudhuria chuo kikuu cha {University}."
+                ]
+            },
+            {
+                "Prompt": "Chuo kikuu cha {FName} {LName} ni kipi?",
+                "Response": [
+                    "{FName} {LName} alihudhuria chuo kikuu cha {University}.",
+                    "{FName} {LName} alisomea chuo kikuu cha {University}.",
+                    "{FName} {LName} alienda chuo kikuu cha {University}.",
+                    "Alihudhuria chuo kikuu cha {University}.",
+                    "Alisomea chuo kikuu cha {University}.",
+                    "Alienda chuo kikuu cha {University}."
+                ]
+            },
+            {
+                "Prompt": "Wapi {FName} {LName} alisomea shahada yake?",
+                "Response": [
+                    "{FName} {LName} alisomea shahada yake {University}.",
+                    "Shahada yake alipata katika {University}.",
+                    "Alisomea shahada yake {University}.",
+                    "Elimu ya shahada yake alipata {University}",
+                    "Elimu ya shahada {FName} {LName} alipata {University}"
                 ]
             }
         ],

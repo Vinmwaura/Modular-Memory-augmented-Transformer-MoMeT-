@@ -28,6 +28,7 @@ def generate_data(data_generator, data_json):
     person_dislikes = data_generator.person_dislikes()
     person_locations = data_generator.kenya_locations()
     person_hobbies = data_generator.person_hobbies()
+    university_attended = data_generator.universities()
 
     content = data_json["Content"].format(
         FName=person_FName,
@@ -37,6 +38,7 @@ def generate_data(data_generator, data_json):
         Likes=person_likes,
         Dislikes=person_dislikes,
         Hobbies=person_hobbies,
+        University=university_attended,
         Mother_FName=mother_FName,
         Mother_LName=family_LName,
         Father_FName=father_FName,
@@ -59,6 +61,7 @@ def generate_data(data_generator, data_json):
                 Likes=person_likes,
                 Dislikes=person_dislikes,
                 Hobbies=person_hobbies,
+                University=university_attended,
                 Mother_FName=mother_FName,
                 Mother_LName=family_LName,
                 Father_FName=father_FName,
@@ -72,6 +75,7 @@ def generate_data(data_generator, data_json):
                 Likes=person_likes,
                 Dislikes=person_dislikes,
                 Hobbies=person_hobbies,
+                University=university_attended,
                 Mother_FName=mother_FName,
                 Mother_LName=family_LName,
                 Father_FName=father_FName,
@@ -83,7 +87,8 @@ def generate_data(data_generator, data_json):
     data_dict = {
         "Name": content_dict["person"],
         "Content": content,
-        "Context": context_data
+        "Context": context_data,
+        "Context_categories": data_json["Context_categories"]
     }
 
     return data_dict
@@ -104,6 +109,11 @@ def main():
         provider_name="person_hobbies",
         elements=person_hobbies_list)
 
+    universities_list = load_data(csv_fpath="./Universities.csv")
+    universities_provider = DynamicProvider(
+        provider_name="universities",
+        elements=universities_list)
+
     kenya_locations_list = load_data(csv_fpath="./Locations.csv")
     kenya_locations_provider = DynamicProvider(
         provider_name="kenya_locations",
@@ -115,6 +125,7 @@ def main():
     data_generator.add_provider(person_dislikes_provider)
     data_generator.add_provider(kenya_locations_provider)
     data_generator.add_provider(person_hobbies_provider)
+    data_generator.add_provider(universities_provider)
 
     json_fpath = "./Dataset_template.json"
     with open(json_fpath) as json_f:
@@ -123,6 +134,7 @@ def main():
     data_dict = generate_data(
         data_generator=data_generator,
         data_json=data_json)
+    print(data_dict)
 
 if __name__ == "__main__":
     main()
