@@ -30,19 +30,21 @@ def generate_data(data_generator, data_json):
     person_hobbies = data_generator.person_hobbies()
     university_attended = data_generator.universities()
 
-    content = data_json["Content"].format(
-        FName=person_FName,
-        LName=family_LName,
-        Occupation=job,
-        Location=person_locations,
-        Likes=person_likes,
-        Dislikes=person_dislikes,
-        Hobbies=person_hobbies,
-        University=university_attended,
-        Mother_FName=mother_FName,
-        Mother_LName=family_LName,
-        Father_FName=father_FName,
-        Father_LName=family_LName)
+    format_dict = {
+        "FName": person_FName,
+        "LName": family_LName,
+        "Occupation": job,
+        "Location": person_locations,
+        "Likes": person_likes,
+        "Dislikes": person_dislikes,
+        "Hobbies": person_hobbies,
+        "University": university_attended,
+        "Mother_FName": mother_FName,
+        "Mother_LName": family_LName,
+        "Father_FName": father_FName,
+        "Father_LName": family_LName}
+
+    content = data_json["Content"].format(**format_dict)
 
     content_fields = data_json["Content_fields"]
     temp_content = [x.lstrip() for x in content.split(";")][:-1]
@@ -53,34 +55,8 @@ def generate_data(data_generator, data_json):
     for key in keys_list:
         random_item = random.choice(data_json["Context"][key])
         context_data[key] = {
-            "Prompt": random_item["Prompt"].format(
-                FName=person_FName,
-                LName=family_LName,
-                Occupation=job,
-                Location=person_locations,
-                Likes=person_likes,
-                Dislikes=person_dislikes,
-                Hobbies=person_hobbies,
-                University=university_attended,
-                Mother_FName=mother_FName,
-                Mother_LName=family_LName,
-                Father_FName=father_FName,
-                Father_LName=family_LName
-            ),
-            "Response": random.choice(random_item["Response"]).format(
-                FName=person_FName,
-                LName=family_LName,
-                Occupation=job,
-                Location=person_locations,
-                Likes=person_likes,
-                Dislikes=person_dislikes,
-                Hobbies=person_hobbies,
-                University=university_attended,
-                Mother_FName=mother_FName,
-                Mother_LName=family_LName,
-                Father_FName=father_FName,
-                Father_LName=family_LName
-            ),
+            "Prompt": random_item["Prompt"].format(**format_dict),
+            "Response": random.choice(random_item["Response"]).format(**format_dict),
             "Summary": content_dict[key]
         }
 
@@ -94,6 +70,7 @@ def generate_data(data_generator, data_json):
     return data_dict
 
 def main():
+    # TODO: Don't hardcode the file paths.
     person_likes_list = load_data(csv_fpath="./Likes.csv")
     person_likes_provider = DynamicProvider(
         provider_name="person_likes",
