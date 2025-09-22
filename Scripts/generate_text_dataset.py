@@ -12,15 +12,16 @@ from faker.providers import DynamicProvider
 
 Faker.seed(69)
 
-def load_data(csv_fpath):
+# Loads list of items to be randomly selected for the template.
+def load_data(csv_fpath, delimiter='\n'):
     with open(csv_fpath) as csv_f:
-        reader = csv.reader(csv_f, delimiter='\n', quotechar='|')
+        reader = csv.reader(csv_f, delimiter=delimiter)
         data_list = list(reader)
 
     data_list_flat = list(chain.from_iterable(data_list))
     return data_list_flat
 
-def generate_data(data_generator, data_json):
+def generate_dataset(data_generator, data_json):
     person_FName = data_generator.first_name()
 
     family_LName = data_generator.last_name()
@@ -29,12 +30,14 @@ def generate_data(data_generator, data_json):
     father_FName = data_generator.first_name_male()
     mother_FName = data_generator.first_name_female()
 
+    # Randomly picks item from CSV list.
     person_likes = data_generator.person_likes()
     person_dislikes = data_generator.person_dislikes()
-    person_locations = data_generator.kenya_locations()
+    person_locations = data_generator.locations()
     person_hobbies = data_generator.person_hobbies()
     university_attended = data_generator.universities()
 
+    # Used in template strings for dataset.
     format_dict = {
         "FName": person_FName,
         "LName": family_LName,
@@ -60,20 +63,20 @@ def generate_data(data_generator, data_json):
     for key in keys_list:
         random_item = random.choice(data_json["Context"][key])
         context_data[key] = {
-            "Prompt": random_item["Prompt"].format(**format_dict),
-            "Response": random.choice(random_item["Response"]).format(**format_dict),
-            "Summary": content_dict[key]
+            "prompt": random_item["Prompt"].format(**format_dict),
+            "response": random.choice(random_item["Response"]).format(**format_dict),
+            "summary": content_dict[key]
         }
 
     data_dict = {
-        "Content": content,
-        "Context": context_data}
+        "content": content,
+        "context": context_data}
 
     return content_dict["person"], data_json["Context_categories"], data_dict
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate Dataset from scratch.")
+        description="Generate text dataset using template structure.")
 
     parser.add_argument(
         "--dest-path",
@@ -82,7 +85,7 @@ def main():
         type=pathlib.Path)
     parser.add_argument(
         "--lists-path",
-        help="File path to CSV List.",
+        help="File path to CSV Lists.",
         required=False,
         default="./csv_List",
         type=pathlib.Path)
@@ -100,7 +103,7 @@ def main():
         type=int)
     parser.add_argument(
         "--num-testing-data",
-        help="Number of training dataset.",
+        help="Number of testing dataset.",
         required=True,
         default=1,
         type=int)
@@ -138,16 +141,16 @@ def main():
         elements=universities_list)
 
     locations_list_path = os.path.join(list_path, "Locations.csv")
-    kenya_locations_list = load_data(csv_fpath=locations_list_path)
-    kenya_locations_provider = DynamicProvider(
-        provider_name="kenya_locations",
-        elements=kenya_locations_list)
+    locations_list = load_data(csv_fpath=locations_list_path)
+    locations_provider = DynamicProvider(
+        provider_name="locations",
+        elements=locations_list)
 
     data_generator = Faker()
 
     data_generator.add_provider(person_likes_provider)
     data_generator.add_provider(person_dislikes_provider)
-    data_generator.add_provider(kenya_locations_provider)
+    data_generator.add_provider(locations_provider)
     data_generator.add_provider(person_hobbies_provider)
     data_generator.add_provider(universities_provider)
 
@@ -158,9 +161,9 @@ def main():
     # Generate Training dataset.
     all_train_data = None
     for train_data_index in range(num_training_data):
-        print(f"Training Dataset: {train_data_index + 1:,} / {num_training_data:,}")
+        print(f"Training dataset: {train_data_index + 1:,} / {num_training_data:,}")
 
-        person_name, categories, data_dict = generate_data(
+        person_name, categories, data_dict = generate_dataset(
             data_generator=data_generator,
             data_json=data_json)
 
@@ -177,20 +180,20 @@ def main():
     try:
         training_dataset_path = os.path.join(
             dest_path,
-            "train.json")
+            "Train.json")
         with open(training_dataset_path, "w") as f:
             json.dump(all_train_data, f, indent=4)
 
         print("Successfully saved training dataset.")
     except Exception as e:
-        print(f"An exception occured when saving training dataset: {e}")
+        raise e
 
     # Generate Testing dataset.
     all_test_data = None
     for test_data_index in range(num_testing_data):
-        print(f"Testing Dataset: {test_data_index + 1:,} / {num_testing_data:,}")
+        print(f"Testing dataset: {test_data_index + 1:,} / {num_testing_data:,}")
 
-        person_name, categories, data_dict = generate_data(
+        person_name, categories, data_dict = generate_dataset(
             data_generator=data_generator,
             data_json=data_json)
 
@@ -207,13 +210,13 @@ def main():
     try:
         testing_dataset_path = os.path.join(
             dest_path,
-            "test.json")
+            "Test.json")
         with open(testing_dataset_path, "w") as f:
             json.dump(all_test_data, f, indent=4)
 
         print("Successfully saved testing dataset.")
     except Exception as e:
-        print(f"An exception occured when saving testing dataset: {e}")
+        raise e
 
 if __name__ == "__main__":
     main()
