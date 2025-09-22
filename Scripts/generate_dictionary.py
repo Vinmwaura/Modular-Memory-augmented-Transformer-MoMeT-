@@ -17,7 +17,7 @@ def load_data(csv_fpath, delimiter='\n'):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate tokens (Character-based + Word-based).")
+        description="Generate dictionary using characters (ASCII printable) and words (Delineated by spaces).")
 
     parser.add_argument(
         "--dest-path",
@@ -69,7 +69,7 @@ def main():
     raw_template_list = load_data(csv_fpath=raw_template_path)
     sentences_list.extend(raw_template_list)
 
-    all_words = list(string.ascii_letters)
+    all_words = list(string.printable)
     for sentence in sentences_list:
         words_split = sentence.split(" ")
         all_words.extend(words_split)
@@ -77,13 +77,18 @@ def main():
     unique_words = list(set(filter(None, all_words)))
     unique_words.sort()
 
-    tokens_data = {}
+    dictionary_data = {}
     for index, unique_word in enumerate(unique_words):
-        tokens_data[unique_word] = index
+        dictionary_data[unique_word] = index
 
-    token_fpath = os.path.join(dest_path, "Tokens.json")
-    with open(token_fpath, "w") as json_f:
-        json.dump(tokens_data, json_f, indent=4)
+    try:
+        dictionary_fpath = os.path.join(dest_path, "Dictionary.json")
+        with open(dictionary_fpath, "w") as json_f:
+            json.dump(dictionary_data, json_f, indent=4)
+
+        print("Successfully saved dictionary!")
+    except Exception as e:
+        raise e
 
 if __name__ == "__main__":
     main()
