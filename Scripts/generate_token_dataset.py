@@ -53,6 +53,7 @@ def main():
     folder_index = 0
 
     for file_index, (person_name, person_data) in enumerate(text_dataset_dict["data"].items()):
+        print(f"{file_index + 1} / {len(text_dataset_dict["data"])}")
         content_tokens = []
         split_contents = person_data["content"].split(" ")
         for index, word in enumerate(split_contents):
@@ -84,7 +85,6 @@ def main():
                         temp_context_tokens.append(token)
                     else:
                         characters = list(word)
-
                         token = [dictionary_dict[character] for character in characters]
                         temp_context_tokens.extend(token)
 
