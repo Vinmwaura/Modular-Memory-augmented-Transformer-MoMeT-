@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import string
 import random
 import pathlib
 import argparse
@@ -24,7 +25,15 @@ def load_data(csv_fpath, delimiter='\n'):
 def generate_dataset(data_generator, data_json):
     person_FName = data_generator.first_name()
 
-    family_LName = data_generator.last_name()
+    # Hack: Ensures no duplicates, Faker runs out of names easily. 
+    uppercase_letters = string.ascii_uppercase
+    random_uppercase_character = random.choice(uppercase_letters)
+
+    lowercase_letters = string.ascii_lowercase
+    random_lowercase_string = ''.join(random.choice(lowercase_letters) for _ in range(5))
+
+    # family_LName = data_generator.last_name()
+    family_LName = random_uppercase_character + random_lowercase_string
 
     job = data_generator.job()
     father_FName = data_generator.first_name_male()

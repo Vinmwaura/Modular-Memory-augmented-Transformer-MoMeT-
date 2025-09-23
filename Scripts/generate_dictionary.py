@@ -62,14 +62,32 @@ def main():
     sentences_list.extend(universities_list)
 
     locations_list_path = os.path.join(list_path, "Locations.csv")
-    kenya_locations_list = load_data(csv_fpath=locations_list_path)
-    sentences_list.extend(kenya_locations_list)
+    locations_list = load_data(csv_fpath=locations_list_path)
+    sentences_list.extend(locations_list)
 
     raw_template_path = os.path.join(template_path, "raw_template_text.txt")
     raw_template_list = load_data(csv_fpath=raw_template_path)
     sentences_list.extend(raw_template_list)
 
-    all_words = list(string.printable)
+    # Combine all lists into one.
+    all_lists = person_likes_list + person_dislikes_list + person_hobbies_list + universities_list + locations_list + raw_template_list
+
+    # Get every unique character from the list of sentences.
+    unique_characters = set()
+    for words in all_lists:
+        for character in words:
+            unique_characters.add(character)
+
+    # Hack: Ensure all lowercase and uppercase ASCII characters are represented.
+    for ascii_lowercase in string.ascii_lowercase:
+        unique_characters.add(ascii_lowercase)
+    for ascii_uppercase in string.ascii_uppercase:
+        unique_characters.add(ascii_uppercase)
+
+    unique_characters_list = list(unique_characters)
+    unique_characters_list.sort()
+
+    all_words = unique_characters_list
     for sentence in sentences_list:
         words_split = sentence.split(" ")
         all_words.extend(words_split)
