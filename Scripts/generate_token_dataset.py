@@ -1,5 +1,4 @@
 import os
-import csv
 import json
 import pathlib
 import argparse
@@ -54,6 +53,7 @@ def main():
 
     for file_index, (person_name, person_data) in enumerate(text_dataset_dict["data"].items()):
         print(f"{file_index + 1} / {len(text_dataset_dict["data"])}")
+
         content_tokens = []
         split_contents = person_data["content"].split(" ")
         for index, word in enumerate(split_contents):
@@ -94,7 +94,12 @@ def main():
 
                 context_tokens[category][context_type] = temp_context_tokens
 
+        # Person name tokens.
+        name_characters = list(person_name)
+        name_tokens = [dictionary_dict[name_character] for name_character in name_characters]
+
         temp_data_dict = {
+            "tag": name_tokens,
             "content": content_tokens,
             "context": context_tokens}
 
@@ -104,6 +109,7 @@ def main():
         curr_file_path = os.path.join(curr_dir_path, person_name + ".json")
 
         all_fpaths.append(curr_file_path)
+
         try:
             with open(curr_file_path, "w") as json_f:
                 json.dump(temp_data_dict, json_f)
@@ -115,13 +121,16 @@ def main():
         if file_index % 1_000 == 0 and file_index > 0:
             folder_index += 1
 
-    file_list_fpath = os.path.join(dest_path, "DatasetList.csv")
-    try:
-        with open(file_list_fpath, "w") as csv_f:
-            list_writer = csv.writer(csv_f, delimiter='\n')
-            list_writer.writerows([all_fpaths])
+    dataset_list = {
+        "categories": categories,
+        "fpaths": all_fpaths}
 
-        print(f"Saved filepaths CSV files.")
+    file_list_fpath = os.path.join(dest_path, "DatasetList.json")
+    try:
+        with open(file_list_fpath, "w") as json_f:
+            json.dump(dataset_list, json_f, indent=4)
+
+        print(f"Saved JSON file.")
     except Exception as e:
         raise e
 
