@@ -27,33 +27,54 @@ class TokenDataset(Dataset):
         with open(json_fpath, "r") as json_f:
             json_data = json.load(json_f)
 
+        # Tag Tokens.
         tag_tokens = json_data["tag"]
+
+        # Content Tokens.
         content_tokens = json_data["content"]
+
+        # Pad Content to be of unform length.
+        content_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(content_tokens))
+        content_tokens_padded = content_tokens[:] + content_paddings
+
+        # Context Tokens.
         context_dict = json_data["context"]
 
-        # Randomly pick a category to form the basis for Prompts, Responses, Summaries.
+        # Randomly pick a category: contains a prompt, response, and summary.
         random_category = random.choice(self.categories)
 
+        prompt_tokens = context_dict[random_category]["prompt"]
+        summary_tokens = context_dict[random_category]["summary"]
+        response_tokens = context_dict[random_category]["response"]
+
+        # Pad Summaries to be of unform length.
+        summary_tokens_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(summary_tokens))
+        summary_tokens_padded = summary_tokens[:] + summary_tokens_paddings
+
         # Input and Target tokens for Model_0.
-        model_0_tokens = [self.special_tokens["start_prompt"]] + \
-            context_dict[random_category]["prompt"] + \
+        model_0_tokens = [
+            self.special_tokens["start_prompt"]] + \
+            prompt_tokens + \
             [self.special_tokens["end_prompt"]] + \
             [self.special_tokens["start_tag"]] + \
             tag_tokens + \
-            [self.special_tokens["end_tag"]]
+            [self.special_tokens["end_tag"]
+        ]
 
-        # Pad token list to be of unform length.
+        # Pad Model_0 tokens to be of unform length.
         model_0_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(model_0_tokens) + 1)
         in_model_0_tokens = model_0_tokens[:-1] + model_0_paddings
         target_model_0_tokens = model_0_tokens[1:] + model_0_paddings
 
         # Input and Target tokens for Model_1.        
-        model_1_tokens = [self.special_tokens["start_prompt"]] + \
-            context_dict[random_category]["prompt"] + \
+        model_1_tokens = [
+            self.special_tokens["start_prompt"]] + \
+            prompt_tokens + \
             [self.special_tokens["end_prompt"]] + \
             [self.special_tokens["SContext"]] + \
-            context_dict[random_category]["summary"] + \
-            [self.special_tokens["EContext"]]
+            summary_tokens + \
+            [self.special_tokens["EContext"]
+        ]
 
         # Pad token list to be of unform length.
         model_1_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(model_1_tokens) + 1)
@@ -61,12 +82,14 @@ class TokenDataset(Dataset):
         target_model_1_tokens = model_1_tokens[1:] + model_1_paddings
 
         # Input and Target tokens for Model_2.        
-        model_2_tokens = [self.special_tokens["start_prompt"]] + \
-            context_dict[random_category]["prompt"] + \
+        model_2_tokens = [
+            self.special_tokens["start_prompt"]] + \
+            prompt_tokens + \
             [self.special_tokens["end_prompt"]] + \
             [self.special_tokens["start_response"]] + \
-            context_dict[random_category]["response"] + \
-            [self.special_tokens["end_response"]]
+            response_tokens + \
+            [self.special_tokens["end_response"]
+        ]
 
         # Pad token list to be of unform length.
         model_2_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(model_2_tokens) + 1)
@@ -76,15 +99,17 @@ class TokenDataset(Dataset):
         tensor_dict = {
             "model_0": {
                 "in": torch.tensor(in_model_0_tokens).long(),
-                "target": torch.tensor(target_model_0_tokens).long(),
+                "target": torch.tensor(target_model_0_tokens).long()
             },
             "model_1": {
                 "in": torch.tensor(in_model_1_tokens).long(),
                 "target": torch.tensor(target_model_1_tokens).long(),
+                "encoder": torch.tensor(content_tokens_padded).long() 
             },
             "model_2": {
                 "in": torch.tensor(in_model_2_tokens).long(),
                 "target": torch.tensor(target_model_2_tokens).long(),
+                "encoder": torch.tensor(summary_tokens_padded).long()
             },
         }
         return tensor_dict
