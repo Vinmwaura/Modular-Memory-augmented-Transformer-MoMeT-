@@ -1,2 +1,3 @@
 *.pyc
 .~lock.*.csv#
+sanity_check.py
