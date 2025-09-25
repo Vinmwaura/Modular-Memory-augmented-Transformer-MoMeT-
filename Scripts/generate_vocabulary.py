@@ -17,7 +17,7 @@ def load_data(csv_fpath, delimiter='\n'):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate dictionary using characters (ASCII printable) and words (Delineated by spaces).")
+        description="Generate vocabulary using characters (ASCII printable) and words (Delineated by spaces).")
 
     parser.add_argument(
         "--dest-path",
@@ -95,16 +95,16 @@ def main():
     unique_words = list(set(filter(None, all_words)))
     unique_words.sort()
 
-    dictionary_data = {}
+    vocabulary_data = {}
     for index, unique_word in enumerate(unique_words):
-        dictionary_data[unique_word] = index
+        vocabulary_data[unique_word] = index
 
     try:
-        dictionary_fpath = os.path.join(dest_path, "Dictionary.json")
-        with open(dictionary_fpath, "w") as json_f:
-            json.dump(dictionary_data, json_f, indent=4)
+        vocabulary_fpath = os.path.join(dest_path, "Vocabulary.json")
+        with open(vocabulary_fpath, "w") as json_f:
+            json.dump(vocabulary_data, json_f, indent=4)
 
-        print("Successfully saved dictionary!")
+        print("Successfully saved vocabulary!")
     except Exception as e:
         raise e
 
