@@ -95,9 +95,25 @@ def main():
     unique_words = list(set(filter(None, all_words)))
     unique_words.sort()
 
-    vocabulary_data = {}
+    vocabulary_data = {"tokens_to_id": {}}
     for index, unique_word in enumerate(unique_words):
-        vocabulary_data[unique_word] = index
+        vocabulary_data["tokens_to_id"][unique_word] = index
+
+    """
+    Special Tokens used in delineating the start and end of specific
+    information as well as pad input.
+    """
+    len_vocabulary = len(vocabulary_data["tokens_to_id"])
+    vocabulary_data["special_tokens_to_id"] = {
+        "pad_token": len_vocabulary + 0,
+        "start_prompt": len_vocabulary + 1,
+        "end_prompt": len_vocabulary + 2,
+        "start_tag": len_vocabulary + 3,
+        "end_tag": len_vocabulary + 4,
+        "SContext": len_vocabulary + 5,
+        "EContext": len_vocabulary + 6,
+        "start_response": len_vocabulary + 7,
+        "end_response": len_vocabulary + 8}
 
     try:
         vocabulary_fpath = os.path.join(dest_path, "Vocabulary.json")

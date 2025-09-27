@@ -36,6 +36,8 @@ def main():
     text_dataset_path = args["text_dataset_path"]
 
     dictionary_dict = load_data(json_fpath=dictionary_path)
+    dictionary_dict = dictionary_dict["tokens_to_id"]
+
     text_dataset_dict = load_data(json_fpath=text_dataset_path)
 
     categories = text_dataset_dict["categories"]
