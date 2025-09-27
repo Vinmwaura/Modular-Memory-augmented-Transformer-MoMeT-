@@ -63,13 +63,12 @@ class LinearBlock(nn.Module):
             activation_type="gelu"):
         super().__init__()
 
-        linear_list = [
-            nn.Linear(in_dim, out_dim)
-        ]
+        linear_list = [nn.Linear(in_dim, out_dim)]
 
         if use_activation:
             linear_list.append(
-                get_activation(activation_type=activation_type))
+                get_activation(
+                    activation_type=activation_type))
 
         self.linear_layer = nn.Sequential(*linear_list)
 
@@ -93,7 +92,8 @@ class ResidualLinearBlock(nn.Module):
             out_dim=dim,
             use_activation=True,
             activation_type=activation_type)
-        self.activation = get_activation(activation_type=activation_type)
+        self.activation = get_activation(
+            activation_type=activation_type)
 
     def forward(self, x, x_skip):
         x = self.linear(x)
@@ -153,7 +153,7 @@ class SelfAttentionBlock(nn.Module):
                 use_activation=True,
                 activation_type=activation_type))
 
-    def forward(self, x):
+    def forward(self, x, pad_mask):
         q = self.q_block(x)  # (N, Seq_q, D)
         k = self.k_block(x)  # (N, Seq_k, D)
         v = self.v_block(x)  # (N, Seq_v, D)
@@ -178,15 +178,24 @@ class SelfAttentionBlock(nn.Module):
         qk_T_normalized = qk_T / (D_split**0.5)  # (N, H, Seq_q, Seq_k)
 
         if self.is_causal:
-            # _, Seq, _ = x.shape
-            mask = torch.ones(
-                (1,1,Seq_q,Seq_k),
+            triu_mask = torch.ones(
+                (1, 1, Seq_q, Seq_k),
                 device=q.device)  # (1, 1, Seq_q, Seq_k)
-            mask = torch.triu(mask, diagonal=1)
-            mask_bool = mask.bool()
+            triu_mask = torch.triu(triu_mask, diagonal=1)
+            triu_mask_bool = triu_mask.bool()
 
             # (N, H, Seq_q, Seq_k)
-            qk_T_normalized.masked_fill_(mask_bool, -torch.inf)
+            qk_T_normalized.masked_fill_(triu_mask_bool, -torch.inf)
+
+        # Mask out [Pad] tokens with -inf.
+        pad_mask = torch.einsum(
+            "nq,nk->nqk",
+            pad_mask,
+            pad_mask)  # (N, Seq_q, Seq_k)
+        pad_mask = pad_mask.unsqueeze(dim=1)  # (N, 1, Seq_q, Seq_k)
+        pad_mask_bool = pad_mask.bool()  # (N, 1, Seq_q, Seq_k)
+
+        qk_T_normalized.masked_fill_(pad_mask_bool, -torch.inf)  # (N, H, Seq_q, Seq_k)
 
         qk_T_softmax = F.softmax(qk_T_normalized, dim=3)  # (N, H, Seq_q, Seq_k)
 
@@ -211,12 +220,10 @@ class CrossAttentionBlock(nn.Module):
             heads=8,
             embedding_dim=512,
             hidden_dim=2_048,
-            is_causal=True,
             activation_type="gelu"):
         super().__init__()
 
         self.heads = heads
-        self.is_causal = is_causal
 
         self.q_block = nn.Sequential(
             LinearBlock(
@@ -250,7 +257,7 @@ class CrossAttentionBlock(nn.Module):
                 use_activation=True,
                 activation_type=activation_type))
 
-    def forward(self, x, y):
+    def forward(self, x, y, x_pad_mask, y_pad_mask):
         q = self.q_block(x)  # (N, Seq_q, D)
         k = self.k_block(y)  # (N, Seq_k, D)
         v = self.v_block(y)  # (N, Seq_v, D)
@@ -277,15 +284,15 @@ class CrossAttentionBlock(nn.Module):
             k_head_split)
         qk_T_normalized = qk_T / (D_split**0.5)  # (N, H, Seq_q, Seq_k)
 
-        if self.is_causal:
-            mask = torch.ones(
-                (1,1,Seq_q,Seq_k),
-                device=q.device)  # (1, 1, Seq_q, Seq_k)
-            mask = torch.triu(mask, diagonal=1)
-            mask_bool = mask.bool()
+        # Mask out [Pad] tokens with -inf.
+        pad_mask = torch.einsum(
+            "nq,nk->nqk",
+            x_pad_mask,
+            y_pad_mask)  # (N, Seq_q, Seq_k)
+        pad_mask = pad_mask.unsqueeze(dim=1)  # (N, 1, Seq_q, Seq_k)
+        pad_mask_bool = pad_mask.bool()  # (N, 1, Seq_q, Seq_k)
 
-            # (N, H, Seq_q, Seq_k)
-            qk_T_normalized.masked_fill_(mask_bool, -torch.inf)
+        qk_T_normalized.masked_fill_(pad_mask_bool, -torch.inf)  # (N, H, Seq_q, Seq_k)
 
         qk_T_softmax = F.softmax(
             qk_T_normalized,
@@ -335,7 +342,6 @@ class TransformerBlock(nn.Module):
                 heads=heads,
                 embedding_dim=embedding_dim,
                 hidden_dim=hidden_dim,
-                is_causal=False,
                 activation_type=activation_type)
             self.cross_attn_ffn_res = ResidualLinearBlock(
                 dim=embedding_dim,
@@ -360,13 +366,19 @@ class TransformerBlock(nn.Module):
             activation_type=activation_type)
         self.feed_forward_norm = nn.LayerNorm(embedding_dim)
 
-    def forward(self, x, y=None):
-        x_self_attn = self.self_attn_block(x)
+    def forward(self, x, x_pad_mask, y_pad_mask, y=None):
+        x_self_attn = self.self_attn_block(
+            x=x,
+            pad_mask=x_pad_mask)
         x_self_attn_res = self.self_attn_ffn_res(x_self_attn, x)
         x_self_attn_norm = self.self_attn_norm(x_self_attn_res)  # (N,Seq,D)
 
         if self.use_cross_attn:
-            x_cross_attn = self.cross_attn_block(x=x_self_attn_norm, y=y)
+            x_cross_attn = self.cross_attn_block(
+                x=x_self_attn_norm,
+                y=y,
+                x_pad_mask=x_pad_mask,
+                y_pad_mask=y_pad_mask)
             x_cross_attn_res = self.cross_attn_ffn_res(x_cross_attn, x_self_attn_norm)
             x_cross_attn_norm = self.cross_attn_norm(x_cross_attn_res)  # (N,Seq,D)
         else:

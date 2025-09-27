@@ -7,7 +7,6 @@ from .layers import (
     TransformerBlock,
     PositionalEncoding)
 
-
 """
 (Decoder-only / Encoder-Decoder) Transformer model.
 (Model_0, Model_1, or Model_2) Architecture.
@@ -15,18 +14,20 @@ from .layers import (
 class Transformer(nn.Module):
     def __init__(
             self,
-            num_decoder_embeddings,
-            embedding_dim,
             hidden_dim,
+            embedding_dim,
+            special_tokens,
+            num_encoder_embeddings,
+            num_decoder_embeddings,
             num_heads=8,
-            num_encoder_embeddings=None,
+            out_classes=8,
             num_encoder_blocks=3,
             num_decoder_blocks=6,
-            out_classes=8,
             use_cross_attn=False,
             activation_type="gelu"):
         super().__init__()
 
+        self.pad_token = special_tokens["pad_token"]
         self.use_cross_attn = use_cross_attn
 
         # Learnable Embedding and Positional Encoding.
@@ -39,8 +40,8 @@ class Transformer(nn.Module):
             embedding_dim=embedding_dim)
         self.pos_layer = PositionalEncoding()
 
+        # Encoder Model Blocks.
         if self.use_cross_attn:
-            # Encoder Model Blocks.
             self.encoder_model_blocks = nn.ModuleList()
             for _ in range(num_encoder_blocks):
                 self.encoder_model_blocks.append(
@@ -81,10 +82,12 @@ class Transformer(nn.Module):
             if name not in own_state:
                 print(f"No Layer found: {name}, skipping")
                 continue
+
             # Skip loading mismatched weights, in cases of weight changes.
             if (own_state[name].shape != param.data.shape):
                 print(f"Skipped: {name}")
                 continue
+
             if isinstance(param, torch.nn.parameter.Parameter):
                 # Backwards compatibility for serialized parameters
                 param = param.data
@@ -102,15 +105,27 @@ class Transformer(nn.Module):
 
         return x_pos, y_pos
 
-    def forward_model(self, x, y):
+    def forward_model(
+            self,
+            x,
+            y,
+            x_pad_mask,
+            y_pad_mask):
         # Encoder Model Blocks.
         if self.use_cross_attn:
             for encoder_model_block in self.encoder_model_blocks:
-                y = encoder_model_block(y)
+                y = encoder_model_block(
+                    x=y,
+                    x_pad_mask=y_pad_mask,
+                    y_pad_mask=None)
 
         # Decoder Model Blocks.
         for decoder_model_block in self.decoder_model_blocks:
-            x = decoder_model_block(x, y)
+            x = decoder_model_block(
+                x=x,
+                y=y,
+                x_pad_mask=x_pad_mask,
+                y_pad_mask=y_pad_mask)
 
         return x
 
@@ -120,8 +135,18 @@ class Transformer(nn.Module):
         return x_classifier
 
     def forward(self, x, y=None):
+        x_pad_mask = (x == self.pad_token).long()  # (N, Seq)
+
+        y_pad_mask = None
+        if y is not None:
+            y_pad_mask = (y == self.pad_token).long()  # (N, Seq)
+
         x_emb_pos, y_emb_pos = self.forward_embeddings(x, y)
-        x_model = self.forward_model(x_emb_pos, y_emb_pos)
+        x_model = self.forward_model(
+            x=x_emb_pos,
+            y=y_emb_pos,
+            x_pad_mask=x_pad_mask,
+            y_pad_mask=y_pad_mask)
         x_classifier = self.forward_classifier(x_model)
 
         return x_classifier
