@@ -33,7 +33,7 @@ class TokenDataset(Dataset):
         # Content Tokens.
         content_tokens = json_data["content"]
 
-        # Pad Content to be of unform length.
+        # Pad Content to be of uniform length.
         content_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(content_tokens))
         content_tokens_padded = content_tokens[:] + content_paddings
 
@@ -47,51 +47,34 @@ class TokenDataset(Dataset):
         summary_tokens = context_dict[random_category]["summary"]
         response_tokens = context_dict[random_category]["response"]
 
-        # Pad Summaries to be of unform length.
+        # Pad Summaries to be of uniform length.
         summary_tokens_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(summary_tokens))
         summary_tokens_padded = summary_tokens[:] + summary_tokens_paddings
 
         # Input and Target tokens for Model_0.
-        model_0_tokens = [
-            self.special_tokens["start_prompt"]] + \
-            prompt_tokens + \
-            [self.special_tokens["end_prompt"]] + \
-            [self.special_tokens["start_tag"]] + \
-            tag_tokens + \
-            [self.special_tokens["end_tag"]
-        ]
+        combined_prompt_tokens = [self.special_tokens["start_prompt"]] + prompt_tokens + [self.special_tokens["end_prompt"]]
+        combined_tag_tokens = [self.special_tokens["start_tag"]] + tag_tokens + [self.special_tokens["end_tag"]]
+        model_0_tokens = combined_prompt_tokens + combined_tag_tokens
 
-        # Pad Model_0 tokens to be of unform length.
+        # Pad Model_0 tokens to be of uniform length.
         model_0_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(model_0_tokens) + 1)
         in_model_0_tokens = model_0_tokens[:-1] + model_0_paddings
         target_model_0_tokens = model_0_tokens[1:] + model_0_paddings
 
-        # Input and Target tokens for Model_1.        
-        model_1_tokens = [
-            self.special_tokens["start_prompt"]] + \
-            prompt_tokens + \
-            [self.special_tokens["end_prompt"]] + \
-            [self.special_tokens["SContext"]] + \
-            summary_tokens + \
-            [self.special_tokens["EContext"]
-        ]
+        # Input and Target tokens for Model_1.
+        combined_summary_tokens = [self.special_tokens["SContext"]] + summary_tokens + [self.special_tokens["EContext"]]
+        model_1_tokens = combined_prompt_tokens + combined_summary_tokens
 
-        # Pad token list to be of unform length.
+        # Pad token list to be of uniform length.
         model_1_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(model_1_tokens) + 1)
         in_model_1_tokens = model_1_tokens[:-1] + model_1_paddings
         target_model_1_tokens = model_1_tokens[1:] + model_1_paddings
 
-        # Input and Target tokens for Model_2.        
-        model_2_tokens = [
-            self.special_tokens["start_prompt"]] + \
-            prompt_tokens + \
-            [self.special_tokens["end_prompt"]] + \
-            [self.special_tokens["start_response"]] + \
-            response_tokens + \
-            [self.special_tokens["end_response"]
-        ]
+        # Input and Target tokens for Model_2.
+        combined_response_tokens = [self.special_tokens["start_response"]] + response_tokens + [self.special_tokens["end_response"]]
+        model_2_tokens = combined_prompt_tokens + combined_response_tokens
 
-        # Pad token list to be of unform length.
+        # Pad token list to be of uniform length.
         model_2_paddings = [self.special_tokens["pad_token"]] * (self.context_window - len(model_2_tokens) + 1)
         in_model_2_tokens = model_2_tokens[:-1] + model_2_paddings
         target_model_2_tokens = model_2_tokens[1:] + model_2_paddings
@@ -112,4 +95,5 @@ class TokenDataset(Dataset):
                 "encoder": torch.tensor(summary_tokens_padded).long()
             },
         }
+
         return tensor_dict
