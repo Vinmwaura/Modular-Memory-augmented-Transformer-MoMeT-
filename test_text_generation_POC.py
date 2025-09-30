@@ -214,11 +214,11 @@ def main():
             temperature=temperature)
         
         if model_type == 0:
-            print(f"Model Response (Named-Entity Recognition) => \"{model_response}\"")
+            print(f"Model Output (Named-Entity Recognition) => \"{model_response}\"")
         elif model_type == 1:
-            print(f"Model Response (Summarization) => \"{model_response}\"")
+            print(f"Model Output (Summarization) => \"{model_response}\"")
         elif model_type == 2:
-            print(f"Model Response (Text Generation) => \"{model_response}\"")
+            print(f"Model Output (Text Generation) => \"{model_response}\"")
         print("*" * 100)
 
 if __name__ == "__main__":

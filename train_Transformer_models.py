@@ -78,7 +78,7 @@ def main():
         "--model-type",
         type=int,
         choices=[0, 1, 2],
-        help="Choose the model to be traines (0: Model_0, 1: Model_1, 2: Model_2)")
+        help="Choose the model to be trained (0: Model_0, 1: Model_1, 2: Model_2)")
     parser.add_argument(
         "--tr-dataset-path",
         help="File path to training json dataset file.",
@@ -107,7 +107,7 @@ def main():
         type=pathlib.Path)
     parser.add_argument(
         "--lr-steps",
-        help="# Global steps in between halving learning rate.",
+        help="Global steps in between halving learning rate.",
         default=50_000,
         type=int)
     parser.add_argument(
